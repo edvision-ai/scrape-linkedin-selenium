@@ -1,8 +1,12 @@
 import logging
+from sysconfig import get_path
 from typing import List
 
 from .ResultsObject import ResultsObject
 from .utils import *
+from urllib.request import urlopen 
+import base64
+import re
 
 logger = logging.getLogger(__name__)
 
@@ -11,7 +15,7 @@ class Profile(ResultsObject):
     """Linkedin User Profile Object"""
 
     attributes = ['personal_info', 'experiences',
-                  'skills', 'accomplishments', 'interests', 'recommendations']
+                  'skills', 'accomplishments']
 
     @property
     def personal_info(self):
@@ -47,11 +51,13 @@ class Profile(ResultsObject):
 
             if not image_element:
                 image_element = one_or_default(
-                    top_card, 'img.pv-top-card__photo')
+                    top_card, 'img.pv-top-card-profile-picture__image')
 
             # Set image url to the src of the image html tag, if it exists
             try:
                 image_url = image_element['src']
+                print(image_url)
+                image_url = base64.b64encode(urlopen(image_url).read())
             except:
                 pass
 
@@ -103,30 +109,60 @@ class Profile(ResultsObject):
             dict of person's professional experiences.  These include:
                 - Jobs
                 - Education
-                - Volunteer Experiences
+                - TODO: Volunteer Experiences
         """
         logger.info("Trying to determine the 'experiences' property")
-        experiences = dict.fromkeys(
-            ['jobs', 'education', 'volunteering'], [])
+        experiences = {
+            'jobs': [],
+            'education': [],
+            'volunteer': []
+        }
         try:
-            container = one_or_default(self.soup, '.background-section')
+            embers = self.soup.find_all("section", {"id": re.compile("ember*")})
+            for ember in embers:
+                header = ember.select("div[class=pvs-header__container]")
+                if len(header) == 0:
+                    header = get_path_text(ember, [("div", {"class": "display-flex justify-flex-start align-items-center pt3 ph3"})])
+                else:
+                    header = header[0].text
+                content = ember.find(class_="pvs-list__outer-container")
+                
+                # Parse education.
+                if len(header) > 0 and "Education" in header:
+                    for edu_section in content.find('ul', {'class': 'ph5'}).find_all('li', {'class': 'artdeco-list__item pvs-list__item--line-separated pvs-list__item--one-column'}):
+                        name = get_path_text(edu_section, [('span', {'class': 't-bold'}), ('span', {'aria-hidden': 'true'})])
+                        degree = get_path_text(edu_section, [('span', {'class': 't-14 t-normal'}), ('span', {'aria-hidden': 'true'})])
+                        if len(degree) > 0:
+                            field_of_study = degree.split(",")[1]
+                            degree = ",".join(degree.split(",")[:-1])
+                        date_range = get_path_text(edu_section, [('span', {'class': 't-14 t-normal t-black--light'}), ('span', {'aria-hidden': 'true'})])
+                        grades = get_path_text(edu_section, [('div', {'class': 'pv-shared-text-with-see-more t-14 t-normal t-black display-flex align-items-center'}), ('span', {'aria-hidden': 'true'})])
+                        experiences['education'].append({'name': name, 'degree': degree, 'date_range': date_range, "field_of_study": field_of_study, "grades": grades})
 
-            jobs = all_or_default(
-                container, '#experience-section ul .pv-position-entity')
-            jobs = list(map(get_job_info, jobs))
-            jobs = flatten_list(jobs)
+                # Parse jobs.
+                if len(header) > 0 and "Experience" in header:
+                    job_section_data = content.find('ul', {'class': 'ph5'})
+                    if job_section_data is not None:
+                        job_section_data = job_section_data.find_all('li', {'class': 'artdeco-list__item pvs-list__item--line-separated pvs-list__item--one-column'})
+                    else:
+                        job_section_data = ember.find('ul', {'class': 'pvs-list'}).find_all('li', {'class': 'pvs-list__paged-list-item artdeco-list__item pvs-list__item--line-separated '})
+                    for job_section in job_section_data:
+                        title = get_path_text(job_section, [('span', {'class': 't-bold'}), ('span', {'aria-hidden': 'true'})])
+                        company = get_path_text(job_section, [('span', {'class': 't-14 t-normal'}), ('span', {'aria-hidden': 'true'})])
+                        company = company.split("·")[0]
+                        date_range, location = '', ''
+                        for i, elem in enumerate(job_section.find_all('span', {'class': 't-14 t-normal t-black--light'})):
+                            if i == 0:
+                                date_range = get_path_text(elem, [('span', {'aria-hidden': 'true'})]).split("·")[0]
+                            elif i == 1:
+                                location = get_path_text(elem, [('span', {'aria-hidden': 'true'})])
+                        description = get_path_text(job_section, [('div', {'class': 'pv-shared-text-with-see-more t-14 t-normal t-black display-flex align-items-center'}), ('span', {'aria-hidden': 'true'})])
+                        if len(description) == 0:
+                            description = get_path_text(job_section, [('div', {'class': 'display-flex '}), ('span', {'aria-hidden': 'true'})])
+                        # Clean the white space in description.
+                        description = re.sub(r'\s(?=\s)','',re.sub(r'\s',' ', description))
+                        experiences['jobs'].append({'title': title, 'company': company, 'date_range': date_range, "description": description, "location": location})
 
-            experiences['jobs'] = jobs
-
-            schools = all_or_default(
-                container, '#education-section .pv-education-entity')
-            schools = list(map(get_school_info, schools))
-            experiences['education'] = schools
-
-            volunteering = all_or_default(
-                container, '.pv-profile-section.volunteering-section .pv-volunteering-entity')
-            volunteering = list(map(get_volunteer_info, volunteering))
-            experiences['volunteering'] = volunteering
         except Exception as e:
             logger.exception(
                 "Failed while determining experiences. Results may be missing/incorrect: %s", e)
@@ -183,44 +219,6 @@ class Profile(ResultsObject):
                 "Failed to get accomplishments, results may be incomplete/missing/wrong: %s", e)
         finally:
             return accomplishments
-
-    @property
-    def interests(self):
-        """
-        Returns:
-            list of person's interests
-        """
-        logger.info("Trying to determine the 'interests' property")
-        interests = []
-        try:
-            container = one_or_default(self.soup, '.pv-interests-section')
-            interests = all_or_default(container, 'ul > li')
-            interests = list(map(lambda i: text_or_default(
-                i, '.pv-entity__summary-title'), interests))
-        except Exception as e:
-            logger.exception("Failed to get interests: %s", e)
-        finally:
-            return interests
-
-    @property
-    def recommendations(self):
-        logger.info("Trying to determine the 'recommendations' property")
-        recs = dict.fromkeys(['received', 'given'], [])
-        try:
-            rec_block = one_or_default(
-                self.soup, 'section.pv-recommendations-section')
-            received, given = all_or_default(
-                rec_block, 'div.artdeco-tabpanel')
-            for rec_received in all_or_default(received, "li.pv-recommendation-entity"):
-                recs["received"].append(
-                    get_recommendation_details(rec_received))
-
-            for rec_given in all_or_default(given, "li.pv-recommendation-entity"):
-                recs["given"].append(get_recommendation_details(rec_given))
-        except Exception as e:
-            logger.exception("Failed to get recommendations: %s", e)
-        finally:
-            return recs
 
     def to_dict(self):
         logger.info(

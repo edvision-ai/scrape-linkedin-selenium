@@ -1,7 +1,5 @@
 from scrape_linkedin import Company, Profile
 from os import path
-import bs4
-from bs4 import BeautifulSoup as BS
 DIR = path.dirname(path.abspath(__file__))
 
 
@@ -27,9 +25,24 @@ def test_company_overview():
 def test_handles_full_html_page():
     """Ensure the full html page and the #profile-wrapper element
     given to the Profile constructor yield the same Profile object"""
-    with open(path.join(DIR, 'html_files/profile.html'), 'r') as f:
+    with open(path.join(DIR, 'mar_2022/austin.html'), 'r') as f:
         profile_html = f.read()
     profile = Profile(profile_html)
+    print(profile.to_dict())
+    print(len(profile.experiences['jobs']))
+    assert profile.personal_info['name'] == "Austin O'Boyle"
+
+
+def test_handles_full_html_page_exp():
+    """Ensure the full html page and the #profile-wrapper element
+    given to the Profile constructor yield the same Profile object"""
+    with open(path.join(DIR, 'mar_2022/austin.html'), 'r') as f:
+        profile_html = f.read()
+    with open(path.join(DIR, 'mar_2022/austin_exp.html'), 'r') as f:
+        exp_html = f.read()
+    profile = Profile(profile_html + exp_html)
+    print(profile.to_dict())
+    print(len(profile.experiences['jobs']))
     assert profile.personal_info['name'] == "Austin O'Boyle"
 
 
