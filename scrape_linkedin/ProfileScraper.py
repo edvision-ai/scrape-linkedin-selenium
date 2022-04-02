@@ -43,7 +43,7 @@ class ProfileScraper(Scraper):
             logger.warning(
                 "Failed to open/get experience info HTML. Returning an empty string.", e)
 
-        full_profile["experiences"] = experience_profile["experiences"]
+        # full_profile["experiences"] = experience_profile["experiences"]
         return full_profile
 
 
