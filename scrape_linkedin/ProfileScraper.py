@@ -31,17 +31,17 @@ class ProfileScraper(Scraper):
         full_profile = self.get_profile().to_dict()
         print(len(full_profile["experiences"]["jobs"]))
         
-        # Merge the more complete experience data.
-        experience_url = 'https://www.linkedin.com/in/' + user + '/details/experience'
-        print("Scraping profile for URL: ", experience_url)
-        self.load_profile_page(url=experience_url)
-        experience_info = self.get_experience_info()
-        try:
-            experience_profile = Profile(experience_info).to_dict()
-            print(len(experience_profile["experiences"]["jobs"]))
-        except Exception as e:
-            logger.warning(
-                "Failed to open/get experience info HTML. Returning an empty string.", e)
+        # # Merge the more complete experience data.
+        # experience_url = 'https://www.linkedin.com/in/' + user + '/details/experience'
+        # print("Scraping profile for URL: ", experience_url)
+        # self.load_profile_page(url=experience_url)
+        # experience_info = self.get_experience_info()
+        # try:
+        #     experience_profile = Profile(experience_info).to_dict()
+        #     print(len(experience_profile["experiences"]["jobs"]))
+        # except Exception as e:
+        #     logger.warning(
+        #         "Failed to open/get experience info HTML. Returning an empty string.", e)
 
         # full_profile["experiences"] = experience_profile["experiences"]
         return full_profile
