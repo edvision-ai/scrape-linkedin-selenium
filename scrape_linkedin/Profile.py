@@ -141,6 +141,7 @@ class Profile(ResultsObject):
 
                 # Parse jobs.
                 if len(header) > 0 and "Experience" in header:
+                    print(job_section_data.prettify())
                     job_section_data = content.find('ul', {'class': 'ph5'})
                     if job_section_data is not None:
                         job_section_data = job_section_data.find_all('li', {'class': 'artdeco-list__item pvs-list__item--line-separated pvs-list__item--one-column'})

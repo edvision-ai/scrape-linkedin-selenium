@@ -33,7 +33,7 @@ class ProfileScraper(Scraper):
         
         # Merge the more complete experience data.
         experience_url = 'https://www.linkedin.com/in/' + user + '/details/experience'
-        print("Scraping profile for URL %s", experience_url)
+        print("Scraping profile for URL: ", experience_url)
         self.load_profile_page(url=experience_url)
         experience_info = self.get_experience_info()
         try:

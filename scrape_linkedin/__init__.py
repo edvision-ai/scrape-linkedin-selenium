@@ -5,4 +5,5 @@ from .MyConnectionScraper import MyConnectionScraper
 from .ParallelScraper import scrape_in_parallel
 from .Profile import Profile
 from .ProfileScraper import ProfileScraper
+from .LinkedinScraper import LinkedinProfileScraper
 from .utils import *
