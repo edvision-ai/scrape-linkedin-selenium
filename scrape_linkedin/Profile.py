@@ -57,7 +57,7 @@ class Profile(ResultsObject):
             try:
                 image_url = image_element['src']
                 print(image_url)
-                image_url = base64.b64encode(urlopen(image_url).read())
+                image_url = base64.b64encode(urlopen(image_url).read()).decode('utf-8')
             except:
                 pass
 
@@ -134,6 +134,7 @@ class Profile(ResultsObject):
                         degree = get_path_text(edu_section, [('span', {'class': 't-14 t-normal'}), ('span', {'aria-hidden': 'true'})])
                         if len(degree) > 0:
                             degree_split = degree.split(",")
+                            field_of_study = ""
                             if len(degree_split) > 1:
                                 field_of_study = degree_split[1]
                                 degree = ",".join(degree.split(",")[:-1])
