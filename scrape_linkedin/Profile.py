@@ -133,8 +133,10 @@ class Profile(ResultsObject):
                         name = get_path_text(edu_section, [('span', {'class': 't-bold'}), ('span', {'aria-hidden': 'true'})])
                         degree = get_path_text(edu_section, [('span', {'class': 't-14 t-normal'}), ('span', {'aria-hidden': 'true'})])
                         if len(degree) > 0:
-                            field_of_study = degree.split(",")[1]
-                            degree = ",".join(degree.split(",")[:-1])
+                            degree_split = degree.split(",")
+                            if len(degree_split) > 1:
+                                field_of_study = degree_split[1]
+                                degree = ",".join(degree.split(",")[:-1])
                         date_range = get_path_text(edu_section, [('span', {'class': 't-14 t-normal t-black--light'}), ('span', {'aria-hidden': 'true'})])
                         grades = get_path_text(edu_section, [('div', {'class': 'pv-shared-text-with-see-more t-14 t-normal t-black display-flex align-items-center'}), ('span', {'aria-hidden': 'true'})])
                         experiences['education'].append({'name': name, 'degree': degree, 'date_range': date_range, "field_of_study": field_of_study, "grades": grades})
