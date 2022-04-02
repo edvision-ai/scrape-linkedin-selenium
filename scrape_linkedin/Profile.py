@@ -132,9 +132,9 @@ class Profile(ResultsObject):
                     for edu_section in content.find('ul', {'class': 'ph5'}).find_all('li', {'class': 'artdeco-list__item pvs-list__item--line-separated pvs-list__item--one-column'}):
                         name = get_path_text(edu_section, [('span', {'class': 't-bold'}), ('span', {'aria-hidden': 'true'})])
                         degree = get_path_text(edu_section, [('span', {'class': 't-14 t-normal'}), ('span', {'aria-hidden': 'true'})])
+                        field_of_study = ""
                         if len(degree) > 0:
                             degree_split = degree.split(",")
-                            field_of_study = ""
                             if len(degree_split) > 1:
                                 field_of_study = degree_split[1]
                                 degree = ",".join(degree.split(",")[:-1])
