@@ -92,7 +92,11 @@ class ProfileScraper(Scraper):
         self.scroll_to_bottom()
 
     def get_profile(self):
-        contact_info = self.get_contact_info()
+        try:
+            contact_info = self.get_contact_info()
+        except:
+            logger.exception("Could not find contact info: %s", e)
+            pass
         try:
             profile = self.driver.find_element_by_css_selector(
                 self.MAIN_SELECTOR).get_attribute("outerHTML")
